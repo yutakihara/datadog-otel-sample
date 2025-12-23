@@ -25,7 +25,8 @@ export function DatadogRumProvider({ children }: { children: React.ReactNode }) 
         trackUserInteractions: true,
         trackResources: true,
         trackLongTasks: true,
-        defaultPrivacyLevel: 'mask-user-input',
+        trackBfcacheViews: true,
+        defaultPrivacyLevel: 'allow',
         // APMとの連携（バックエンドトレースとの接続）
         allowedTracingUrls: [
           { match: /https?:\/\/.*/, propagatorTypes: ['tracecontext', 'datadog'] },
