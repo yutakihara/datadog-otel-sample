@@ -1,36 +1,132 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Datadog + OpenTelemetry Sample App
 
-## Getting Started
+Next.js アプリケーションで Datadog RUM（フロントエンド）と OpenTelemetry（バックエンド）を使用したサンプルです。
 
-First, run the development server:
+## 機能
+
+- 🔍 **Datadog RUM**: フロントエンドのリアルユーザーモニタリング
+- 📊 **OpenTelemetry**: バックエンドの分散トレーシング
+- 📝 **ログ出力**: APIエンドポイントでのログ出力
+- 🔗 **APM連携**: フロントエンドとバックエンドのトレース接続
+
+## セットアップ
+
+### 1. 依存関係のインストール
+
+```bash
+npm install
+```
+
+### 2. 環境変数の設定
+
+`.env.example` をコピーして `.env.local` を作成します。
+
+```bash
+cp .env.example .env.local
+```
+
+以下の環境変数を設定してください：
+
+#### Datadog RUM（フロントエンド）
+
+1. [Datadog RUM アプリケーション](https://app.datadoghq.com/rum/application/create)を作成
+2. 取得した値を設定：
+
+```env
+NEXT_PUBLIC_DATADOG_APPLICATION_ID=your-application-id
+NEXT_PUBLIC_DATADOG_CLIENT_TOKEN=your-client-token
+NEXT_PUBLIC_DATADOG_SITE=datadoghq.com
+NEXT_PUBLIC_DATADOG_SERVICE=datadog-otel-sample
+NEXT_PUBLIC_DATADOG_ENV=production
+```
+
+#### OpenTelemetry（バックエンド）
+
+1. [Datadog API Key](https://app.datadoghq.com/organization-settings/api-keys)を取得
+2. 設定：
+
+```env
+OTEL_EXPORTER_OTLP_ENDPOINT=https://trace.agent.datadoghq.com
+OTEL_EXPORTER_OTLP_HEADERS=DD-API-KEY=your-datadog-api-key
+OTEL_SERVICE_NAME=datadog-otel-sample
+```
+
+### 3. 開発サーバーの起動
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+http://localhost:3000 でアプリケーションが起動します。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## API エンドポイント
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### GET /api/hello
 
-## Learn More
+シンプルなHello APIエンドポイント。基本的なトレースを生成します。
 
-To learn more about Next.js, take a look at the following resources:
+### GET /api/users
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+ユーザー一覧を取得。データベース操作とデータ変換のトレースを生成します。
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### POST /api/users
 
-## Deploy on Vercel
+新しいユーザーを作成。バリデーションとDB挿入のトレースを生成します。
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Vercel へのデプロイ
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### 1. GitHub にプッシュ
+
+```bash
+git add .
+git commit -m "Initial commit"
+git push origin main
+```
+
+### 2. Vercel でインポート
+
+1. [Vercel Dashboard](https://vercel.com/new) にアクセス
+2. GitHub リポジトリをインポート
+3. 環境変数を設定
+4. デプロイ
+
+### Vercel 環境変数
+
+Vercel のプロジェクト設定で以下の環境変数を設定してください：
+
+| 変数名 | 説明 |
+|--------|------|
+| `NEXT_PUBLIC_DATADOG_APPLICATION_ID` | Datadog RUM Application ID |
+| `NEXT_PUBLIC_DATADOG_CLIENT_TOKEN` | Datadog RUM Client Token |
+| `NEXT_PUBLIC_DATADOG_SITE` | Datadog サイト (例: datadoghq.com) |
+| `NEXT_PUBLIC_DATADOG_SERVICE` | サービス名 |
+| `NEXT_PUBLIC_DATADOG_ENV` | 環境名 (production) |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | Datadog OTLP エンドポイント |
+| `OTEL_EXPORTER_OTLP_HEADERS` | Datadog API Key |
+
+## 確認方法
+
+### フロントエンド（RUM）
+
+1. ブラウザの DevTools を開く
+2. コンソールで `[Datadog RUM] Initialized successfully` を確認
+3. [Datadog RUM Dashboard](https://app.datadoghq.com/rum) でセッションを確認
+
+### バックエンド（OTEL）
+
+1. API エンドポイントを呼び出し
+2. レスポンスの `traceId` を確認
+3. [Datadog APM](https://app.datadoghq.com/apm/traces) でトレースを確認
+
+## 技術スタック
+
+- [Next.js](https://nextjs.org/) - React フレームワーク
+- [@datadog/browser-rum](https://docs.datadoghq.com/real_user_monitoring/) - Datadog RUM SDK
+- [@vercel/otel](https://vercel.com/docs/tracing/instrumentation) - Vercel OpenTelemetry
+- [OpenTelemetry](https://opentelemetry.io/) - 分散トレーシング
+
+## 参考リンク
+
+- [Datadog RUM for Next.js](https://docs.datadoghq.com/real_user_monitoring/guide/monitor-your-nextjs-app-with-rum/)
+- [Vercel OpenTelemetry](https://vercel.com/docs/tracing/instrumentation)
+- [Datadog OpenTelemetry](https://docs.datadoghq.com/opentelemetry/)
