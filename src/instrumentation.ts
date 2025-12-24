@@ -12,9 +12,11 @@ export function register() {
     return;
   }
 
+  // Datadog OTLP Ingest Endpoint
+  // https://docs.datadoghq.com/opentelemetry/setup/otlp_ingest/traces/
   const endpoint = site === 'datadoghq.com'
-    ? 'https://otlp.datadoghq.com:4318/v1/traces'
-    : `https://otlp.${site.replace('datadoghq.', '').replace('.com', '')}.datadoghq.com:4318/v1/traces`;
+    ? 'https://otlp.datadoghq.com/v1/traces'
+    : `https://otlp.${site.replace('datadoghq.', '').replace('.com', '')}.datadoghq.com/v1/traces`;
 
   registerOTel({
     serviceName,
