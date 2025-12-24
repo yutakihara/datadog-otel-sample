@@ -24,6 +24,8 @@ interface ApiResponse {
   mode?: string;
   source?: string;
   queryPattern?: string;
+  action?: string;
+  operations?: string[];
 }
 
 export default function Home() {
@@ -114,41 +116,67 @@ export default function Home() {
               </button>
             </div>
 
-            {/* Users API - GET */}
-            <div className="bg-slate-800/50 backdrop-blur rounded-xl p-6 border border-slate-700">
-              <h3 className="text-xl font-semibold mb-2 text-purple-400">GET /api/users</h3>
-              <p className="text-slate-400 text-sm mb-4">
-                ユーザー一覧を取得。
-              </p>
-              <button
-                onClick={() => callApi('/api/users')}
-                disabled={loading === '/api/users'}
-                className="w-full py-2 px-4 bg-purple-600 hover:bg-purple-500 disabled:bg-slate-600 rounded-lg font-medium transition-colors"
-              >
-                {loading === '/api/users' ? '呼び出し中...' : 'ユーザー一覧を取得'}
-              </button>
-            </div>
-
             {/* External API */}
-            <div className="bg-slate-800/50 backdrop-blur rounded-xl p-6 border border-slate-700 md:col-span-2">
+            <div className="bg-slate-800/50 backdrop-blur rounded-xl p-6 border border-slate-700">
               <h3 className="text-xl font-semibold mb-2 text-green-400">GET /api/external</h3>
               <p className="text-slate-400 text-sm mb-4">
-                外部API呼び出し。<span className="text-green-300">fetch の自動計装</span>により各HTTPリクエストがスパンとして記録。
+                外部API呼び出し（fetch自動計装）
               </p>
               <button
                 onClick={() => callApi('/api/external')}
                 disabled={loading === '/api/external'}
                 className="w-full py-2 px-4 bg-green-600 hover:bg-green-500 disabled:bg-slate-600 rounded-lg font-medium transition-colors"
               >
-                {loading === '/api/external' ? '呼び出し中...' : '外部APIを呼び出す (6リクエスト)'}
+                {loading === '/api/external' ? '呼び出し中...' : '外部APIを呼び出す'}
               </button>
+            </div>
+
+            {/* DB CRUD Operations */}
+            <div className="bg-slate-800/50 backdrop-blur rounded-xl p-6 border border-slate-700 md:col-span-2 border-yellow-500/50">
+              <h3 className="text-xl font-semibold mb-2 text-yellow-400">🗄️ Database CRUD (Prisma + Supabase)</h3>
+              <p className="text-slate-400 text-sm mb-4">
+                <span className="text-yellow-300">Prisma自動計装</span>により各SQLクエリがスパンとして記録されます。<br/>
+                Create, Read, Update, Delete操作でDatadogにスパンが送信されます。
+              </p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <button
+                  onClick={() => callApi('/api/db?action=list')}
+                  disabled={loading === '/api/db?action=list'}
+                  className="py-2 px-4 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-600 rounded-lg font-medium transition-colors text-sm"
+                >
+                  {loading === '/api/db?action=list' ? '...' : '📋 一覧取得'}
+                </button>
+                <button
+                  onClick={() => callApi('/api/db?action=create')}
+                  disabled={loading === '/api/db?action=create'}
+                  className="py-2 px-4 bg-green-600 hover:bg-green-500 disabled:bg-slate-600 rounded-lg font-medium transition-colors text-sm"
+                >
+                  {loading === '/api/db?action=create' ? '...' : '➕ データ作成'}
+                </button>
+                <button
+                  onClick={() => callApi('/api/db?action=query')}
+                  disabled={loading === '/api/db?action=query'}
+                  className="py-2 px-4 bg-purple-600 hover:bg-purple-500 disabled:bg-slate-600 rounded-lg font-medium transition-colors text-sm"
+                >
+                  {loading === '/api/db?action=query' ? '...' : '🔍 複数クエリ'}
+                </button>
+                <button
+                  onClick={() => callApi('/api/db?action=delete')}
+                  disabled={loading === '/api/db?action=delete'}
+                  className="py-2 px-4 bg-red-600 hover:bg-red-500 disabled:bg-slate-600 rounded-lg font-medium transition-colors text-sm"
+                >
+                  {loading === '/api/db?action=delete' ? '...' : '🗑️ テスト削除'}
+                </button>
+              </div>
+              <p className="text-xs text-slate-500 mt-3">
+                operations: findMany, create, count, deleteMany, $transaction, $queryRaw
+              </p>
             </div>
 
             {/* N+1 Problem Test */}
             <div className="bg-slate-800/50 backdrop-blur rounded-xl p-6 border border-slate-700 md:col-span-2 border-orange-500/50">
-              <h3 className="text-xl font-semibold mb-2 text-orange-400">🗄️ N+1問題テスト (PostgreSQL + Prisma)</h3>
+              <h3 className="text-xl font-semibold mb-2 text-orange-400">⚠️ N+1問題テスト</h3>
               <p className="text-slate-400 text-sm mb-4">
-                <span className="text-orange-300">Prisma自動計装</span>により各SQLクエリがスパンとして記録されます。<br/>
                 N+1パターンと最適化パターンを比較してDatadogでスパン数の違いを確認できます。
               </p>
               <div className="grid grid-cols-2 gap-3">
@@ -157,26 +185,23 @@ export default function Home() {
                   disabled={loading === '/api/n-plus-one?mode=n-plus-one'}
                   className="py-2 px-4 bg-red-600 hover:bg-red-500 disabled:bg-slate-600 rounded-lg font-medium transition-colors"
                 >
-                  {loading === '/api/n-plus-one?mode=n-plus-one' ? '実行中...' : '❌ N+1パターン（非効率）'}
+                  {loading === '/api/n-plus-one?mode=n-plus-one' ? '実行中...' : '❌ N+1パターン'}
                 </button>
                 <button
                   onClick={() => callApi('/api/n-plus-one?mode=optimized')}
                   disabled={loading === '/api/n-plus-one?mode=optimized'}
                   className="py-2 px-4 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-600 rounded-lg font-medium transition-colors"
                 >
-                  {loading === '/api/n-plus-one?mode=optimized' ? '実行中...' : '✅ 最適化パターン（効率的）'}
+                  {loading === '/api/n-plus-one?mode=optimized' ? '実行中...' : '✅ 最適化パターン'}
                 </button>
               </div>
-              <p className="text-xs text-slate-500 mt-3">
-                ※ DATABASE_URL未設定の場合はモックデータで動作します
-              </p>
             </div>
 
             {/* Users API - POST */}
             <div className="bg-slate-800/50 backdrop-blur rounded-xl p-6 border border-slate-700 md:col-span-2">
               <h3 className="text-xl font-semibold mb-2 text-pink-400">POST /api/users</h3>
               <p className="text-slate-400 text-sm mb-4">
-                新しいユーザーを作成。
+                新しいユーザーを作成（メモリ内のみ）
               </p>
               <div className="flex flex-col sm:flex-row gap-3">
                 <input
@@ -225,6 +250,11 @@ export default function Home() {
                       {response.endpoint}
                     </span>
                     <div className="flex items-center gap-2">
+                      {response.data.action && (
+                        <span className="px-2 py-1 rounded text-xs font-medium bg-yellow-500/20 text-yellow-400">
+                          {response.data.action}
+                        </span>
+                      )}
                       {response.data.mode && (
                         <span className={`px-2 py-1 rounded text-xs font-medium ${
                           response.data.mode === 'n-plus-one'
@@ -243,6 +273,11 @@ export default function Home() {
                       </span>
                     </div>
                   </div>
+                  {response.data.operations && (
+                    <div className="mb-2 text-xs text-yellow-400 font-mono">
+                      Operations: {response.data.operations.join(', ')}
+                    </div>
+                  )}
                   {response.data.queryPattern && (
                     <div className="mb-2 text-xs text-orange-400 font-mono">
                       Query Pattern: {response.data.queryPattern}
@@ -265,7 +300,7 @@ export default function Home() {
             @vercel/otel + @prisma/instrumentation による自動計装
           </p>
           <p className="mt-2">
-            DatadogでN+1問題のスパンを確認できます
+            DatadogでPrismaのスパンを確認できます
           </p>
         </footer>
       </div>
