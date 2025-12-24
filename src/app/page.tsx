@@ -12,7 +12,6 @@ interface ApiResponse {
   }>;
   count?: number;
   timestamp: string;
-  traceId: string;
   user?: {
     id: number;
     name: string;
@@ -34,14 +33,14 @@ export default function Home() {
       const data = await res.json();
       setResponses(prev => [
         { endpoint, data, status: res.status },
-        ...prev.slice(0, 9), // 最新10件を保持
+        ...prev.slice(0, 9),
       ]);
     } catch (error) {
       console.error('API call failed:', error);
       setResponses(prev => [
         { 
           endpoint, 
-          data: { error: String(error), timestamp: new Date().toISOString(), traceId: 'N/A' },
+          data: { error: String(error), timestamp: new Date().toISOString() },
           status: 500 
         },
         ...prev.slice(0, 9),
@@ -71,14 +70,14 @@ export default function Home() {
             Datadog + OpenTelemetry Demo
           </h1>
           <p className="text-slate-400 text-lg">
-            Next.js App with Datadog RUM & Vercel OTEL Integration
+            Next.js App with Datadog RUM & Vercel OTEL Auto-Instrumentation
           </p>
           <div className="mt-4 flex justify-center gap-4 text-sm">
             <span className="px-3 py-1 bg-cyan-500/20 text-cyan-300 rounded-full">
               🔍 RUM Monitoring
             </span>
             <span className="px-3 py-1 bg-purple-500/20 text-purple-300 rounded-full">
-              📊 Distributed Tracing
+              📊 Auto Tracing
             </span>
             <span className="px-3 py-1 bg-pink-500/20 text-pink-300 rounded-full">
               📝 Logging
@@ -95,7 +94,7 @@ export default function Home() {
             <div className="bg-slate-800/50 backdrop-blur rounded-xl p-6 border border-slate-700">
               <h3 className="text-xl font-semibold mb-2 text-cyan-400">GET /api/hello</h3>
               <p className="text-slate-400 text-sm mb-4">
-                シンプルなHello APIエンドポイント。基本的なトレースを生成します。
+                シンプルなHello APIエンドポイント。自動計装によりトレースが生成されます。
               </p>
               <button
                 onClick={() => callApi('/api/hello')}
@@ -110,7 +109,7 @@ export default function Home() {
             <div className="bg-slate-800/50 backdrop-blur rounded-xl p-6 border border-slate-700">
               <h3 className="text-xl font-semibold mb-2 text-purple-400">GET /api/users</h3>
               <p className="text-slate-400 text-sm mb-4">
-                ユーザー一覧を取得。DB操作とデータ変換のトレースを生成します。
+                ユーザー一覧を取得。自動計装によりトレースが生成されます。
               </p>
               <button
                 onClick={() => callApi('/api/users')}
@@ -125,7 +124,7 @@ export default function Home() {
             <div className="bg-slate-800/50 backdrop-blur rounded-xl p-6 border border-slate-700 md:col-span-2">
               <h3 className="text-xl font-semibold mb-2 text-pink-400">POST /api/users</h3>
               <p className="text-slate-400 text-sm mb-4">
-                新しいユーザーを作成。バリデーションとDB挿入のトレースを生成します。
+                新しいユーザーを作成。自動計装によりトレースが生成されます。
               </p>
               <div className="flex flex-col sm:flex-row gap-3">
                 <input
@@ -186,11 +185,6 @@ export default function Home() {
                       {JSON.stringify(response.data, null, 2)}
                     </pre>
                   </div>
-                  {response.data.traceId && response.data.traceId !== 'N/A' && (
-                    <div className="mt-2 text-xs text-slate-500">
-                      Trace ID: <code className="text-purple-400">{response.data.traceId}</code>
-                    </div>
-                  )}
                 </div>
               ))}
             </div>
@@ -200,10 +194,10 @@ export default function Home() {
         {/* フッター */}
         <footer className="mt-16 text-center text-slate-500 text-sm">
           <p>
-            ブラウザのDevToolsを開いてコンソールログを確認してください。
+            @vercel/otel による自動計装でトレースが生成されます。
           </p>
           <p className="mt-2">
-            Vercelにデプロイ後、Datadogでトレースとログを確認できます。
+            Vercelにデプロイ後、Datadogでトレースを確認できます。
           </p>
         </footer>
       </div>
