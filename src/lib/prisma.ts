@@ -8,10 +8,9 @@ declare global {
 export const isDatabaseConfigured = !!process.env.DATABASE_URL;
 
 export const prisma = isDatabaseConfigured
-  ? global.prisma || new PrismaClient({ log: ['query', 'info', 'warn', 'error'] })
+  ? global.prisma || new PrismaClient()
   : null;
 
 if (isDatabaseConfigured && process.env.NODE_ENV !== 'production') {
   global.prisma = prisma!;
 }
-
