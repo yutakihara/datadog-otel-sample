@@ -11,13 +11,15 @@ interface ApiResponse {
     displayName: string;
   }>;
   count?: number;
-  timestamp: string;
+  timestamp?: string;
   user?: {
     id: number;
     name: string;
     email: string;
   };
+  results?: Record<string, unknown>;
   error?: string;
+  note?: string;
 }
 
 export default function Home() {
@@ -72,7 +74,7 @@ export default function Home() {
           <p className="text-slate-400 text-lg">
             Next.js App with Datadog RUM & Vercel OTEL Auto-Instrumentation
           </p>
-          <div className="mt-4 flex justify-center gap-4 text-sm">
+          <div className="mt-4 flex justify-center gap-4 text-sm flex-wrap">
             <span className="px-3 py-1 bg-cyan-500/20 text-cyan-300 rounded-full">
               🔍 RUM Monitoring
             </span>
@@ -81,6 +83,9 @@ export default function Home() {
             </span>
             <span className="px-3 py-1 bg-pink-500/20 text-pink-300 rounded-full">
               📝 Logging
+            </span>
+            <span className="px-3 py-1 bg-green-500/20 text-green-300 rounded-full">
+              🌐 HTTP Auto-Instrumentation
             </span>
           </div>
         </header>
@@ -94,7 +99,7 @@ export default function Home() {
             <div className="bg-slate-800/50 backdrop-blur rounded-xl p-6 border border-slate-700">
               <h3 className="text-xl font-semibold mb-2 text-cyan-400">GET /api/hello</h3>
               <p className="text-slate-400 text-sm mb-4">
-                シンプルなHello APIエンドポイント。自動計装によりトレースが生成されます。
+                シンプルなHello APIエンドポイント。
               </p>
               <button
                 onClick={() => callApi('/api/hello')}
@@ -109,7 +114,7 @@ export default function Home() {
             <div className="bg-slate-800/50 backdrop-blur rounded-xl p-6 border border-slate-700">
               <h3 className="text-xl font-semibold mb-2 text-purple-400">GET /api/users</h3>
               <p className="text-slate-400 text-sm mb-4">
-                ユーザー一覧を取得。自動計装によりトレースが生成されます。
+                ユーザー一覧を取得。
               </p>
               <button
                 onClick={() => callApi('/api/users')}
@@ -120,11 +125,30 @@ export default function Home() {
               </button>
             </div>
 
+            {/* External API */}
+            <div className="bg-slate-800/50 backdrop-blur rounded-xl p-6 border border-slate-700 md:col-span-2">
+              <h3 className="text-xl font-semibold mb-2 text-green-400">GET /api/external</h3>
+              <p className="text-slate-400 text-sm mb-4">
+                外部API（JSONPlaceholder, HTTPBin）を呼び出し。<br/>
+                <span className="text-green-300">fetch の自動計装</span>により、各HTTPリクエストがスパンとして記録されます。
+              </p>
+              <div className="mb-3 text-xs text-slate-500">
+                呼び出すAPI: JSONPlaceholder (users, posts, comments, todos, albums), HTTPBin
+              </div>
+              <button
+                onClick={() => callApi('/api/external')}
+                disabled={loading === '/api/external'}
+                className="w-full py-2 px-4 bg-green-600 hover:bg-green-500 disabled:bg-slate-600 rounded-lg font-medium transition-colors"
+              >
+                {loading === '/api/external' ? '呼び出し中...' : '外部APIを呼び出す (6リクエスト)'}
+              </button>
+            </div>
+
             {/* Users API - POST */}
             <div className="bg-slate-800/50 backdrop-blur rounded-xl p-6 border border-slate-700 md:col-span-2">
               <h3 className="text-xl font-semibold mb-2 text-pink-400">POST /api/users</h3>
               <p className="text-slate-400 text-sm mb-4">
-                新しいユーザーを作成。自動計装によりトレースが生成されます。
+                新しいユーザーを作成。
               </p>
               <div className="flex flex-col sm:flex-row gap-3">
                 <input
@@ -180,7 +204,7 @@ export default function Home() {
                       {response.status}
                     </span>
                   </div>
-                  <div className="bg-slate-900 rounded-lg p-3 overflow-x-auto">
+                  <div className="bg-slate-900 rounded-lg p-3 overflow-x-auto max-h-64 overflow-y-auto">
                     <pre className="text-sm text-slate-300 font-mono">
                       {JSON.stringify(response.data, null, 2)}
                     </pre>
@@ -197,7 +221,7 @@ export default function Home() {
             @vercel/otel による自動計装でトレースが生成されます。
           </p>
           <p className="mt-2">
-            Vercelにデプロイ後、Datadogでトレースを確認できます。
+            Datadogでトレースを確認: 各fetchリクエストが個別のスパンとして表示されます。
           </p>
         </footer>
       </div>
