@@ -1,9 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma, isDatabaseConfigured } from '@/lib/prisma';
-import { logger } from '@/lib/logger';
 
 // N+1問題を確認するためのエンドポイント
-// 各Authorに対して個別にPostsを取得する（N+1パターン）
 
 // モックデータ（DB未設定時）
 const mockAuthors = [
@@ -32,18 +30,16 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const mode = searchParams.get('mode') || 'n-plus-one';
 
-  logger.info('N+1 API called', { mode, dbConfigured: isDatabaseConfigured });
+  console.log('N+1 API called', { mode, dbConfigured: isDatabaseConfigured });
 
   try {
     if (isDatabaseConfigured && prisma) {
-      // 実際のDB使用
       if (mode === 'n-plus-one') {
         return await handleNPlusOneWithDB();
       } else {
         return await handleOptimizedWithDB();
       }
     } else {
-      // モックデータ使用
       if (mode === 'n-plus-one') {
         return await handleNPlusOneMock();
       } else {
@@ -51,7 +47,7 @@ export async function GET(request: Request) {
       }
     }
   } catch (error) {
-    logger.error('N+1 API error', { error: String(error) });
+    console.error('N+1 API error', error);
     return NextResponse.json(
       { error: 'Internal Server Error', details: String(error) },
       { status: 500 }
@@ -59,24 +55,19 @@ export async function GET(request: Request) {
   }
 }
 
-// ========================================
-// N+1パターン（非効率）- DB
-// ========================================
+// N+1パターン - DB
 async function handleNPlusOneWithDB() {
-  logger.info('Executing N+1 pattern with DB');
+  console.log('Executing N+1 pattern with DB');
 
-  // 1回目のクエリ: 全Authors取得
   const authors = await prisma!.author.findMany();
-  logger.info('Fetched authors', { count: authors.length });
+  console.log('Fetched authors', { count: authors.length });
 
-  // N回のクエリ: 各Authorの投稿を個別に取得（N+1問題）
   const authorsWithPosts = await Promise.all(
     authors.map(async (author) => {
       const posts = await prisma!.post.findMany({
         where: { authorId: author.id },
       });
 
-      // さらにN回: 各Postのコメントを個別に取得（さらにN+1）
       const postsWithComments = await Promise.all(
         posts.map(async (post) => {
           const comments = await prisma!.comment.findMany({
@@ -94,7 +85,7 @@ async function handleNPlusOneWithDB() {
     })
   );
 
-  logger.info('N+1 pattern completed', {
+  console.log('N+1 pattern completed', {
     authorCount: authors.length,
     totalQueries: 1 + authors.length + authorsWithPosts.reduce((sum, a) => sum + a.postCount, 0),
   });
@@ -109,13 +100,10 @@ async function handleNPlusOneWithDB() {
   });
 }
 
-// ========================================
 // 最適化パターン - DB
-// ========================================
 async function handleOptimizedWithDB() {
-  logger.info('Executing optimized pattern with DB');
+  console.log('Executing optimized pattern with DB');
 
-  // 1回のクエリで全データを取得（Eager Loading）
   const authors = await prisma!.author.findMany({
     include: {
       posts: {
@@ -135,7 +123,7 @@ async function handleOptimizedWithDB() {
     })),
   }));
 
-  logger.info('Optimized pattern completed', {
+  console.log('Optimized pattern completed', {
     authorCount: authors.length,
     totalQueries: 1,
   });
@@ -150,26 +138,21 @@ async function handleOptimizedWithDB() {
   });
 }
 
-// ========================================
-// N+1パターン（非効率）- Mock
-// ========================================
+// N+1パターン - Mock
 async function handleNPlusOneMock() {
-  logger.info('Executing N+1 pattern with mock data');
+  console.log('Executing N+1 pattern with mock data');
 
-  // 1回目: Authors取得をシミュレート
   await new Promise((r) => setTimeout(r, 30));
   const authors = [...mockAuthors];
 
-  // N回: 各Authorの投稿を個別に取得をシミュレート
   const authorsWithPosts = await Promise.all(
     authors.map(async (author) => {
-      await new Promise((r) => setTimeout(r, 20)); // DB遅延シミュレート
+      await new Promise((r) => setTimeout(r, 20));
       const posts = mockPosts.filter((p) => p.authorId === author.id);
 
-      // さらにN回: 各Postのコメントを個別に取得をシミュレート
       const postsWithComments = await Promise.all(
         posts.map(async (post) => {
-          await new Promise((r) => setTimeout(r, 15)); // DB遅延シミュレート
+          await new Promise((r) => setTimeout(r, 15));
           const comments = mockComments.filter((c) => c.postId === post.id);
           return { ...post, comments, commentCount: comments.length };
         })
@@ -183,7 +166,7 @@ async function handleNPlusOneMock() {
     })
   );
 
-  logger.info('N+1 pattern (mock) completed', {
+  console.log('N+1 pattern (mock) completed', {
     authorCount: authors.length,
     simulatedQueries: 1 + authors.length + authorsWithPosts.reduce((sum, a) => sum + a.postCount, 0),
   });
@@ -199,13 +182,10 @@ async function handleNPlusOneMock() {
   });
 }
 
-// ========================================
 // 最適化パターン - Mock
-// ========================================
 async function handleOptimizedMock() {
-  logger.info('Executing optimized pattern with mock data');
+  console.log('Executing optimized pattern with mock data');
 
-  // 1回のクエリをシミュレート
   await new Promise((r) => setTimeout(r, 50));
 
   const result = mockAuthors.map((author) => {
@@ -220,7 +200,7 @@ async function handleOptimizedMock() {
     };
   });
 
-  logger.info('Optimized pattern (mock) completed', {
+  console.log('Optimized pattern (mock) completed', {
     authorCount: result.length,
     simulatedQueries: 1,
   });
@@ -235,4 +215,3 @@ async function handleOptimizedMock() {
     timestamp: new Date().toISOString(),
   });
 }
-

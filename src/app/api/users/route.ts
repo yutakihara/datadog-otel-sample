@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { logger } from '@/lib/logger';
 
 // ダミーユーザーデータ
 const users = [
@@ -9,7 +8,7 @@ const users = [
 ];
 
 export async function GET() {
-  logger.info('Users API GET called');
+  console.log('Users API GET called');
 
   // DBアクセスをシミュレート
   await new Promise(resolve => setTimeout(resolve, 100));
@@ -19,7 +18,7 @@ export async function GET() {
     displayName: `${user.name} <${user.email}>`,
   }));
 
-  logger.info('Users fetched', { count: transformedUsers.length });
+  console.log('Users fetched', { count: transformedUsers.length });
 
   return NextResponse.json({
     users: transformedUsers,
@@ -29,12 +28,12 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  logger.info('Users API POST called');
+  console.log('Users API POST called');
 
   const body = await request.json();
 
   if (!body.name || !body.email) {
-    logger.warn('Validation failed', { body });
+    console.warn('Validation failed', body);
     return NextResponse.json(
       { error: 'Name and email are required' },
       { status: 400 }
@@ -50,7 +49,7 @@ export async function POST(request: Request) {
     email: body.email,
   };
 
-  logger.info('User created', { userId: newUser.id, email: newUser.email });
+  console.log('User created', { userId: newUser.id });
 
   return NextResponse.json(
     { user: newUser, message: 'User created successfully', timestamp: new Date().toISOString() },

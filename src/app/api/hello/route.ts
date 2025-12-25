@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
-import { logger } from '@/lib/logger';
 
 export async function GET() {
-  logger.info('Hello API called');
+  console.log('Hello API called');
 
   // 処理をシミュレート
   await new Promise(resolve => setTimeout(resolve, 50));
@@ -12,7 +11,7 @@ export async function GET() {
     timestamp: new Date().toISOString(),
   };
 
-  logger.info('Hello API completed', { duration_ms: 50 });
+  console.log('Hello API completed');
 
   return NextResponse.json(response);
 }
