@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma, isDatabaseConfigured } from '@/lib/prisma';
+import { logger } from '@/lib/logger';
 
 // N+1問題を確認するためのエンドポイント
 
@@ -30,7 +31,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const mode = searchParams.get('mode') || 'n-plus-one';
 
-  console.log('N+1 API called', { mode, dbConfigured: isDatabaseConfigured });
+  logger.info('N+1 API called', { mode, dbConfigured: isDatabaseConfigured });
 
   try {
     if (isDatabaseConfigured && prisma) {
@@ -47,7 +48,7 @@ export async function GET(request: Request) {
       }
     }
   } catch (error) {
-    console.error('N+1 API error', error);
+    logger.error('N+1 API error', { error: String(error) });
     return NextResponse.json(
       { error: 'Internal Server Error', details: String(error) },
       { status: 500 }
@@ -57,10 +58,10 @@ export async function GET(request: Request) {
 
 // N+1パターン - DB
 async function handleNPlusOneWithDB() {
-  console.log('Executing N+1 pattern with DB');
+  logger.info('Executing N+1 pattern with DB');
 
   const authors = await prisma!.author.findMany();
-  console.log('Fetched authors', { count: authors.length });
+  logger.info('Fetched authors', { count: authors.length });
 
   const authorsWithPosts = await Promise.all(
     authors.map(async (author) => {
@@ -85,7 +86,7 @@ async function handleNPlusOneWithDB() {
     })
   );
 
-  console.log('N+1 pattern completed', {
+  logger.info('N+1 pattern completed', {
     authorCount: authors.length,
     totalQueries: 1 + authors.length + authorsWithPosts.reduce((sum, a) => sum + a.postCount, 0),
   });
@@ -102,7 +103,7 @@ async function handleNPlusOneWithDB() {
 
 // 最適化パターン - DB
 async function handleOptimizedWithDB() {
-  console.log('Executing optimized pattern with DB');
+  logger.info('Executing optimized pattern with DB');
 
   const authors = await prisma!.author.findMany({
     include: {
@@ -123,7 +124,7 @@ async function handleOptimizedWithDB() {
     })),
   }));
 
-  console.log('Optimized pattern completed', {
+  logger.info('Optimized pattern completed', {
     authorCount: authors.length,
     totalQueries: 1,
   });
@@ -140,7 +141,7 @@ async function handleOptimizedWithDB() {
 
 // N+1パターン - Mock
 async function handleNPlusOneMock() {
-  console.log('Executing N+1 pattern with mock data');
+  logger.info('Executing N+1 pattern with mock data');
 
   await new Promise((r) => setTimeout(r, 30));
   const authors = [...mockAuthors];
@@ -166,7 +167,7 @@ async function handleNPlusOneMock() {
     })
   );
 
-  console.log('N+1 pattern (mock) completed', {
+  logger.info('N+1 pattern (mock) completed', {
     authorCount: authors.length,
     simulatedQueries: 1 + authors.length + authorsWithPosts.reduce((sum, a) => sum + a.postCount, 0),
   });
@@ -184,7 +185,7 @@ async function handleNPlusOneMock() {
 
 // 最適化パターン - Mock
 async function handleOptimizedMock() {
-  console.log('Executing optimized pattern with mock data');
+  logger.info('Executing optimized pattern with mock data');
 
   await new Promise((r) => setTimeout(r, 50));
 
@@ -200,7 +201,7 @@ async function handleOptimizedMock() {
     };
   });
 
-  console.log('Optimized pattern (mock) completed', {
+  logger.info('Optimized pattern (mock) completed', {
     authorCount: result.length,
     simulatedQueries: 1,
   });

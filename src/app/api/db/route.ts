@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma, isDatabaseConfigured } from '@/lib/prisma';
+import { logger } from '@/lib/logger';
 
 // データベース CRUD 操作テスト用エンドポイント
 
@@ -7,7 +8,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const action = searchParams.get('action') || 'list';
 
-  console.log('DB API called', { action, dbConfigured: isDatabaseConfigured });
+  logger.info('DB API called', { action, dbConfigured: isDatabaseConfigured });
 
   if (!isDatabaseConfigured || !prisma) {
     return NextResponse.json({
@@ -30,7 +31,7 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
     }
   } catch (error) {
-    console.error('DB API error', error);
+    logger.error('DB API error', { error: String(error) });
     return NextResponse.json({
       error: 'Database error',
       details: String(error),
@@ -40,7 +41,7 @@ export async function GET(request: Request) {
 
 // 全データ一覧
 async function listAll() {
-  console.log('Listing all data');
+  logger.info('Listing all data');
 
   const authors = await prisma!.author.findMany({
     include: {
@@ -69,7 +70,7 @@ async function listAll() {
 
 // テストデータ作成
 async function createTestData() {
-  console.log('Creating test data');
+  logger.info('Creating test data');
 
   // Author作成
   const author = await prisma!.author.create({
@@ -78,7 +79,7 @@ async function createTestData() {
       email: `test_${Date.now()}@example.com`,
     },
   });
-  console.log('Created author', { authorId: author.id });
+  logger.info('Created author', { authorId: author.id });
 
   // Post作成
   const post = await prisma!.post.create({
@@ -89,7 +90,7 @@ async function createTestData() {
       authorId: author.id,
     },
   });
-  console.log('Created post', { postId: post.id });
+  logger.info('Created post', { postId: post.id });
 
   // Comment作成
   const comment = await prisma!.comment.create({
@@ -98,7 +99,7 @@ async function createTestData() {
       postId: post.id,
     },
   });
-  console.log('Created comment', { commentId: comment.id });
+  logger.info('Created comment', { commentId: comment.id });
 
   // 作成したデータを取得
   const result = await prisma!.author.findUnique({
@@ -123,7 +124,7 @@ async function createTestData() {
 
 // テストデータ削除
 async function deleteTestData() {
-  console.log('Deleting test data');
+  logger.info('Deleting test data');
 
   const testAuthors = await prisma!.author.findMany({
     where: {
@@ -164,7 +165,7 @@ async function deleteTestData() {
     },
   });
 
-  console.log('Deleted test data', {
+  logger.info('Deleted test data', {
     authors: deletedAuthors.count,
     posts: deletedPosts,
     comments: deletedComments,
@@ -185,7 +186,7 @@ async function deleteTestData() {
 
 // 複数クエリ実行
 async function runQueries() {
-  console.log('Running multiple queries');
+  logger.info('Running multiple queries');
 
   const authorCount = await prisma!.author.count();
   const postCount = await prisma!.post.count();
@@ -238,7 +239,7 @@ async function runQueries() {
 
 // POST: 新しいAuthorとPostを作成
 export async function POST(request: Request) {
-  console.log('DB API POST called');
+  logger.info('DB API POST called');
 
   if (!isDatabaseConfigured || !prisma) {
     return NextResponse.json({
@@ -279,7 +280,7 @@ export async function POST(request: Request) {
       return { author, post };
     });
 
-    console.log('Created via transaction', {
+    logger.info('Created via transaction', {
       authorId: result.author.id,
       postId: result.post?.id,
     });
@@ -292,7 +293,7 @@ export async function POST(request: Request) {
     }, { status: 201 });
 
   } catch (error) {
-    console.error('DB API POST error', error);
+    logger.error('DB API POST error', { error: String(error) });
     return NextResponse.json({
       error: 'Failed to create',
       details: String(error),
