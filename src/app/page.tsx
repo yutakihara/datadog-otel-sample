@@ -26,6 +26,8 @@ interface ApiResponse {
   queryPattern?: string;
   action?: string;
   operations?: string[];
+  orm?: string;
+  instrumentation?: string;
 }
 
 export default function Home() {
@@ -92,6 +94,9 @@ export default function Home() {
             </span>
             <span className="px-3 py-1 bg-orange-500/20 text-orange-300 rounded-full">
               🗄️ Prisma/PostgreSQL
+            </span>
+            <span className="px-3 py-1 bg-teal-500/20 text-teal-300 rounded-full">
+              🔷 Drizzle ORM
             </span>
           </div>
         </header>
@@ -173,9 +178,9 @@ export default function Home() {
               </p>
             </div>
 
-            {/* N+1 Problem Test */}
+            {/* N+1 Problem Test (Prisma) */}
             <div className="bg-slate-800/50 backdrop-blur rounded-xl p-6 border border-slate-700 md:col-span-2 border-orange-500/50">
-              <h3 className="text-xl font-semibold mb-2 text-orange-400">⚠️ N+1問題テスト</h3>
+              <h3 className="text-xl font-semibold mb-2 text-orange-400">⚠️ N+1問題テスト (Prisma)</h3>
               <p className="text-slate-400 text-sm mb-4">
                 N+1パターンと最適化パターンを比較してDatadogでスパン数の違いを確認できます。
               </p>
@@ -195,6 +200,55 @@ export default function Home() {
                   {loading === '/api/n-plus-one?mode=optimized' ? '実行中...' : '✅ 最適化パターン'}
                 </button>
               </div>
+            </div>
+
+            {/* Drizzle ORM + @kubiks/otel-drizzle */}
+            <div className="bg-slate-800/50 backdrop-blur rounded-xl p-6 border border-slate-700 md:col-span-2 border-teal-500/50">
+              <h3 className="text-xl font-semibold mb-2 text-teal-400">🔷 Drizzle ORM + @kubiks/otel-drizzle</h3>
+              <p className="text-slate-400 text-sm mb-4">
+                <span className="text-teal-300">@kubiks/otel-drizzle</span>による自動計装。<br/>
+                すべてのDB操作が自動的にOpenTelemetryスパンとして記録されます。
+              </p>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                <button
+                  onClick={() => callApi('/api/drizzle?action=list')}
+                  disabled={loading === '/api/drizzle?action=list'}
+                  className="py-2 px-4 bg-teal-600 hover:bg-teal-500 disabled:bg-slate-600 rounded-lg font-medium transition-colors text-sm"
+                >
+                  {loading === '/api/drizzle?action=list' ? '...' : '📋 一覧取得'}
+                </button>
+                <button
+                  onClick={() => callApi('/api/drizzle?action=create')}
+                  disabled={loading === '/api/drizzle?action=create'}
+                  className="py-2 px-4 bg-green-600 hover:bg-green-500 disabled:bg-slate-600 rounded-lg font-medium transition-colors text-sm"
+                >
+                  {loading === '/api/drizzle?action=create' ? '...' : '➕ データ作成'}
+                </button>
+                <button
+                  onClick={() => callApi('/api/drizzle?action=n-plus-one')}
+                  disabled={loading === '/api/drizzle?action=n-plus-one'}
+                  className="py-2 px-4 bg-red-600 hover:bg-red-500 disabled:bg-slate-600 rounded-lg font-medium transition-colors text-sm"
+                >
+                  {loading === '/api/drizzle?action=n-plus-one' ? '...' : '❌ N+1パターン'}
+                </button>
+                <button
+                  onClick={() => callApi('/api/drizzle?action=optimized')}
+                  disabled={loading === '/api/drizzle?action=optimized'}
+                  className="py-2 px-4 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-600 rounded-lg font-medium transition-colors text-sm"
+                >
+                  {loading === '/api/drizzle?action=optimized' ? '...' : '✅ 最適化パターン'}
+                </button>
+                <button
+                  onClick={() => callApi('/api/drizzle?action=delete')}
+                  disabled={loading === '/api/drizzle?action=delete'}
+                  className="py-2 px-4 bg-red-600 hover:bg-red-500 disabled:bg-slate-600 rounded-lg font-medium transition-colors text-sm"
+                >
+                  {loading === '/api/drizzle?action=delete' ? '...' : '🗑️ テスト削除'}
+                </button>
+              </div>
+              <p className="text-xs text-slate-500 mt-3">
+                お客様環境（Drizzle + Supabase）と同等の構成でテスト可能
+              </p>
             </div>
 
             {/* Users API - POST */}
@@ -250,8 +304,17 @@ export default function Home() {
                       {response.endpoint}
                     </span>
                     <div className="flex items-center gap-2">
+                      {response.data.orm && (
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${
+                          response.data.orm === 'drizzle'
+                            ? 'bg-teal-500/20 text-teal-400'
+                            : 'bg-yellow-500/20 text-yellow-400'
+                        }`}>
+                          {response.data.orm}
+                        </span>
+                      )}
                       {response.data.action && (
-                        <span className="px-2 py-1 rounded text-xs font-medium bg-yellow-500/20 text-yellow-400">
+                        <span className="px-2 py-1 rounded text-xs font-medium bg-slate-500/20 text-slate-400">
                           {response.data.action}
                         </span>
                       )}
@@ -297,10 +360,10 @@ export default function Home() {
         {/* フッター */}
         <footer className="mt-16 text-center text-slate-500 text-sm">
           <p>
-            @vercel/otel + @prisma/instrumentation による自動計装
+            @vercel/otel + @kubiks/otel-drizzle による自動計装
           </p>
           <p className="mt-2">
-            DatadogでPrismaのスパンを確認できます
+            DatadogでDrizzle ORMのスパンを確認できます
           </p>
         </footer>
       </div>
