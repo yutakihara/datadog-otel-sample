@@ -19,6 +19,7 @@ function createDrizzleClient() {
   const pool = new Pool({
     connectionString,
     max: 5,
+    ssl: { rejectUnauthorized: false }, // Supabase接続用
   });
   
   // Drizzle ORM インスタンスを作成
