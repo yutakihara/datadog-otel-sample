@@ -1,6 +1,5 @@
-import { drizzle } from "drizzle-orm/postgres-js";
-import { instrumentDrizzleClient } from "@kubiks/otel-drizzle";
-import postgres from "postgres";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
 import * as schema from "./schema";
 
 // DATABASE_URL が設定されているかチェック
@@ -15,26 +14,17 @@ function createDrizzleClient() {
 
   const connectionString = process.env.DATABASE_URL!;
   
-  // postgres.js クライアントを作成
-  // prepare: false は Supabase の PgBouncer 互換のため
-  const client = postgres(connectionString, { 
-    prepare: false,
+  // pg Pool を作成
+  // @opentelemetry/instrumentation-pg が自動的にこのPoolをインストルメントする
+  const pool = new Pool({
+    connectionString,
     max: 5,
   });
   
   // Drizzle ORM インスタンスを作成
-  const db = drizzle(client, { schema });
+  const db = drizzle(pool, { schema });
   
-  // 🔥 @kubiks/otel-drizzle で自動計装を適用
-  // これにより、すべてのDB操作が自動的にOpenTelemetryスパンになる
-  instrumentDrizzleClient(db, {
-    dbSystem: "postgresql",           // データベースシステム
-    dbName: "postgres",               // データベース名
-    captureQueryText: true,           // SQLクエリをスパンに含める
-    maxQueryTextLength: 2000,         // クエリ文字列の最大長
-  });
-  
-  console.log("[Drizzle] Client initialized with OpenTelemetry instrumentation");
+  console.log("[Drizzle] Client initialized with pg driver (auto-instrumented by @opentelemetry/instrumentation-pg)");
   
   return db;
 }
@@ -55,4 +45,3 @@ if (isDrizzleConfigured && process.env.NODE_ENV !== "production") {
 
 // スキーマもエクスポート
 export * from "./schema";
-
