@@ -1,8 +1,15 @@
 import { registerOTel } from '@vercel/otel';
-import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
-import { PgInstrumentation } from '@opentelemetry/instrumentation-pg';
 
-export function register() {
+export async function register() {
+  // Edge runtime では実行しない（Node.js 専用パッケージを使用するため）
+  if (process.env.NEXT_RUNTIME === 'edge') {
+    return;
+  }
+
+  // OpenTelemetry パッケージを動的インポート（Node.js runtime 専用）
+  const { PgInstrumentation } = await import('@opentelemetry/instrumentation-pg');
+  const { OTLPTraceExporter } = await import('@opentelemetry/exporter-trace-otlp-http');
+
   const apiKey = process.env.DD_API_KEY;
   const site = process.env.DD_SITE || 'datadoghq.com';
   const serviceName = process.env.DD_SERVICE || 'datadog-otel-sample';
@@ -11,7 +18,7 @@ export function register() {
 
   // PostgreSQL自動計装
   const pgInstrumentation = new PgInstrumentation({
-    enhancedDatabaseReporting: true, // SQLクエリをスパンに含める
+    enhancedDatabaseReporting: true,
   });
 
   if (!apiKey) {
