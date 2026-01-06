@@ -36,17 +36,14 @@ export async function register() {
     ? 'https://otlp.datadoghq.com/v1/traces'
     : `https://otlp.${site.replace('datadoghq.', '').replace('.com', '')}.datadoghq.com/v1/traces`;
 
-  // テスト: serviceName と attributes['service.name'] を異なる値に設定
-  // serviceName: registerOTelの第一引数 → 'datadog-otel-sample'
-  // attributes['service.name']: リソース属性 → 'datadog-otel-sample-attr'
   registerOTel({
-    serviceName,  // 'datadog-otel-sample'
+    serviceName,
     traceExporter: new OTLPTraceExporter({
       url: endpoint,
       headers: { 'DD-API-KEY': apiKey },
     }),
     attributes: {
-      'service.name': `${serviceName}-attr`,  // 異なる値: 'datadog-otel-sample-attr'
+      'service.name': serviceName,
       'service.version': serviceVersion,
       'deployment.environment': environment,
     },
